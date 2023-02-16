@@ -3,19 +3,25 @@ package com.example.todoapp;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentReference;
 
 public class NoteCreation extends AppCompatActivity {
 
     private EditText titleEditText, contentEditText;
+    TextView title_note;
     private ImageView saveNote;
+    Boolean editMode = false;
+    String title, content ,docId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +30,21 @@ public class NoteCreation extends AppCompatActivity {
         saveNote = findViewById(R.id.saveNote);
         titleEditText = findViewById(R.id.notes_title_text);
         contentEditText = findViewById(R.id.notes_content_text);
+        title_note =findViewById(R.id.title_note);
+        Intent intent = getIntent();
+        title = intent.getStringExtra("title");
+        content = intent.getStringExtra("content");
+        docId = intent.getStringExtra("docId");
+
+        if(docId!=null && !docId.isEmpty()) {
+            editMode = true;
+            titleEditText.setText(title);
+            contentEditText.setText(content);
+            title_note.setText("Edit your note");
+        }
+
+
+
 
         saveNote.setOnClickListener((v)->savingNotes());
 
@@ -45,7 +66,13 @@ public class NoteCreation extends AppCompatActivity {
     }
     void saveNotesToFirebase(Notes note){
         Db db = new Db();
-        db.getNotesCollection().document().set(note).addOnCompleteListener(new OnCompleteListener<Void>() {
+        DocumentReference documentReference;
+        if(editMode ==true){
+            documentReference = db.getNotesCollection().document(docId);
+        }else{
+            documentReference = db.getNotesCollection().document();
+        }
+        documentReference.set(note).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if(task.isSuccessful()){
